@@ -29,6 +29,7 @@ clock = pygame.time.Clock()
 # Font
 font = pygame.font.Font(None, 36)
 game_over_font = pygame.font.Font(None, 74)
+watermark_font = pygame.font.SysFont("Arial", 10, italic=True)
 
 class Player:
     def __init__(self):
@@ -50,16 +51,12 @@ class Player:
         self.bullets.append(bullet)
         
     def draw(self, screen):
-        # Draw spaceship (rocket shape)
-        # Body
         pygame.draw.polygon(screen, WHITE, [
             (self.x + self.width // 2, self.y),
             (self.x, self.y + self.height),
             (self.x + self.width, self.y + self.height)
         ])
-        # Cockpit
         pygame.draw.circle(screen, BLUE, (self.x + self.width // 2, self.y + 15), 8)
-        # Wings
         pygame.draw.polygon(screen, RED, [
             (self.x, self.y + self.height),
             (self.x - 10, self.y + self.height + 10),
@@ -82,29 +79,21 @@ class Enemy:
         
     def move(self, enemies):
         self.x += self.speed_x
-        
-        # Check if any enemy hits the edge
         change_direction = False
         for enemy in enemies:
             if enemy.x <= 0 or enemy.x >= SCREEN_WIDTH - enemy.width:
                 change_direction = True
                 break
-                
         if change_direction:
             for enemy in enemies:
                 enemy.speed_x *= -1
                 enemy.y += enemy.speed_y
                 
     def draw(self, screen):
-        # Draw alien (space invader style)
-        # Body
         pygame.draw.rect(screen, ORANGE, (self.x + 5, self.y + 10, 30, 15))
-        # Head
         pygame.draw.rect(screen, ORANGE, (self.x + 10, self.y, 20, 15))
-        # Eyes
         pygame.draw.circle(screen, BLACK, (self.x + 15, self.y + 7), 3)
         pygame.draw.circle(screen, BLACK, (self.x + 25, self.y + 7), 3)
-        # Legs
         pygame.draw.rect(screen, ORANGE, (self.x, self.y + 25, 8, 5))
         pygame.draw.rect(screen, ORANGE, (self.x + 12, self.y + 25, 8, 5))
         pygame.draw.rect(screen, ORANGE, (self.x + 24, self.y + 25, 8, 5))
@@ -155,7 +144,6 @@ class Asteroid:
             self.x = random.randint(0, SCREEN_WIDTH)
             
     def draw(self, screen):
-        # Draw rotating asteroid
         points = []
         for i in range(6):
             angle = math.radians(60 * i + self.rotation)
@@ -175,55 +163,49 @@ class Planet:
         
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-        # Add some shading
-        pygame.draw.circle(screen, tuple(max(0, c - 30) for c in self.color), 
+        pygame.draw.circle(screen, tuple(max(0, c - 30) for c in self.color),
                          (self.x - 5, self.y - 5), self.radius, 2)
-        
         if self.has_ring:
-            # Draw planet ring
-            pygame.draw.ellipse(screen, (200, 150, 200), 
-                              (self.x - self.radius - 20, self.y - 10, 
+            pygame.draw.ellipse(screen, (200, 150, 200),
+                              (self.x - self.radius - 20, self.y - 10,
                                (self.radius + 20) * 2, 20), 3)
 
 def check_collision(bullet, enemy):
-    distance = math.sqrt((bullet.x - (enemy.x + enemy.width // 2)) ** 2 + 
+    distance = math.sqrt((bullet.x - (enemy.x + enemy.width // 2)) ** 2 +
                         (bullet.y - (enemy.y + enemy.height // 2)) ** 2)
     return distance < 20
 
+def draw_watermark(screen):
+    # Watermark / credit
+    watermark_text = watermark_font.render("by Alvino Aldorino", True, WHITE)
+    x = SCREEN_WIDTH // 2 - watermark_text.get_width() // 2
+    y = SCREEN_HEIGHT - 10 - watermark_text.get_height() // 2
+    screen.blit(watermark_text, (x, y))
+
 def draw_background(screen, stars, asteroids, planets):
-    # Dark space background
     screen.fill(DARK_BLUE)
-    
-    # Draw planets
     for planet in planets:
         planet.draw(screen)
-    
-    # Draw stars
     for star in stars:
         star.draw(screen)
-        
-    # Draw asteroids
     for asteroid in asteroids:
         asteroid.draw(screen)
 
 def main():
-    # Initialize game objects
     player = Player()
     
-    # Create enemies
     enemies = []
     for row in range(3):
         for col in range(8):
             enemy = Enemy(col * 80 + 100, row * 60 + 50)
             enemies.append(enemy)
     
-    # Create background elements
     stars = [Star() for _ in range(100)]
     asteroids = [Asteroid() for _ in range(5)]
     planets = [
-        Planet(700, 100, 40, (150, 150, 150)),  # Moon
-        Planet(650, 300, 50, (255, 100, 150), True),  # Pink planet with ring
-        Planet(100, 150, 30, (100, 200, 255)),  # Blue planet
+        Planet(700, 100, 40, (150, 150, 150)),
+        Planet(650, 300, 50, (255, 100, 150), True),
+        Planet(100, 150, 30, (100, 200, 255)),
     ]
     
     score = 0
@@ -231,7 +213,7 @@ def main():
     running = True
     
     while running:
-        clock.tick(60)  # 60 FPS
+        clock.tick(60)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -240,27 +222,20 @@ def main():
                 if event.key == pygame.K_SPACE and not game_over:
                     player.shoot()
                 if event.key == pygame.K_r and game_over:
-                    # Restart game
                     return main()
                     
         if not game_over:
-            # Get keys
             keys = pygame.key.get_pressed()
-            
-            # Move player
             player.move(keys)
             
-            # Move enemies
             if enemies:
                 enemies[0].move(enemies)
             
-            # Move bullets
             for bullet in player.bullets[:]:
                 bullet.move()
                 if bullet.y < 0:
                     player.bullets.remove(bullet)
                     
-            # Check collisions
             for bullet in player.bullets[:]:
                 for enemy in enemies[:]:
                     if check_collision(bullet, enemy):
@@ -270,48 +245,40 @@ def main():
                         score += 10
                         break
                         
-            # Move background elements
             for star in stars:
                 star.move()
             for asteroid in asteroids:
                 asteroid.move()
                 
-            # Check if enemies reached the bottom
             for enemy in enemies:
                 if enemy.y > SCREEN_HEIGHT - 100:
                     game_over = True
                     
-            # Check if all enemies are destroyed
             if len(enemies) == 0:
                 game_over = True
         
-        # Draw everything
         draw_background(screen, stars, asteroids, planets)
         
-        # Draw player
         player.draw(screen)
         
-        # Draw enemies
         for enemy in enemies:
             enemy.draw(screen)
             
-        # Draw bullets
         for bullet in player.bullets:
             bullet.draw(screen)
             
-        # Draw score
         score_text = font.render(f"Score: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
+
+        # Draw watermark
+        draw_watermark(screen)
         
-        # Draw game over
         if game_over:
             if len(enemies) == 0:
-                # Player wins - show only win message
                 win_text = game_over_font.render("YOU WIN!", True, YELLOW)
                 win_rect = win_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
                 screen.blit(win_text, win_rect)
             else:
-                # Player loses - show game over
                 game_over_text = game_over_font.render("GAME OVER", True, WHITE)
                 text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
                 screen.blit(game_over_text, text_rect)
