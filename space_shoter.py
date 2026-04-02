@@ -78,12 +78,17 @@ class Enemy:
         self.speed_y = 20
         
     def move(self, enemies):
-        self.x += self.speed_x
+        # Move all enemies horizontally
+        for enemy in enemies:
+            enemy.x += enemy.speed_x
+
+        # Check if any enemy hits the edge
         change_direction = False
         for enemy in enemies:
             if enemy.x <= 0 or enemy.x >= SCREEN_WIDTH - enemy.width:
                 change_direction = True
                 break
+
         if change_direction:
             for enemy in enemies:
                 enemy.speed_x *= -1
